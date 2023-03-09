@@ -1,20 +1,16 @@
 const http = require('node:http');
 const app = require('../app');
-const { MongoClient, ServerApiVersion } = require('mongodb');
 const cluster = require('node:cluster');
+// const mongodb = require('../config/mongodb');
 // const OS = require('node:os');
 require('dotenv').config();
 const port = 3000;
 
-const uri = "mongodb+srv://akash:PMl04cq268FoJ6hY@cluster.zejyhfr.mongodb.net/app?retryWrites=true&w=majority";
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
-client.connect(async err => {
-    const collection = await client.db("app").collection("users").insertOne({ email: "aka@gmail.com", password: "987654321" });
-    // perform actions on the collection object
-    client.close();
-});
+
 // console.log("Number of cores : ", OS.cpus().length);
+
+
 
 if (cluster.isMaster) {
     console.log(`Master process ${process.pid} is running`);
