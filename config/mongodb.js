@@ -1,7 +1,6 @@
 const { query } = require('express');
 const { MongoClient } = require('mongodb');
 
-const url = "mongodb+srv://akash:PMl04cq268FoJ6hY@cluster.zejyhfr.mongodb.net/test?retryWrites=true&w=majority";
 
 class MongoDB {
     constructor(connectionString = null) {
