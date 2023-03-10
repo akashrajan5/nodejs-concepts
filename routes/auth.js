@@ -1,11 +1,12 @@
 const express = require('express');
 var jwt = require('jsonwebtoken');
+const { registerRules, validate } = require('../middlewares/validator');
 const { splitToken } = require('../utils/main');
 const router = express.Router();
 
-router.post('/register', (req, res) => {
-    const { username, email, password, verfiyPass } = req.body;
-    res.send("register path");
+router.post('/register', registerRules(), validate, (req, res) => {
+    const { username, email, password, confirmPass } = req.body;
+    res.send();
 });
 
 router.post('/login', (req, res) => {
