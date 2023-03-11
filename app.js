@@ -20,11 +20,5 @@ app.use('/auth', auth);
 app.use('/', authVerify, home);
 app.use('/error', error);
 
-process.on('uncaughtException', function (err) {
-    console.error(err.stack);
-    console.error((new Date).toUTCString() + ' uncaughtException:', err.message);
-    process.exit(1);
-});
-
 
 module.exports = app;
