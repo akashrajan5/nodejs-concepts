@@ -2,11 +2,11 @@
   "name": "main-node",
   "version": "1.0.0",
   "description": "best practices",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
-    "nodemon": "nodemon ./bin/www",
-    "test": "node ./bin/www",
-    "start": "node ./bin/www"
+    "nodemon": "nodemon ./src/bin/www",
+    "test": "node ./src/bin/www",
+    "start": "node ./src/bin/www"
   },
   "author": "",
   "license": "ISC",

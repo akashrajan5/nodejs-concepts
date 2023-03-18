@@ -1,15 +1,10 @@
-const express = require('express');
 const { client } = require('../config/mongodb');
+const { splitToken } = require('../utils/main');
 var jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const { validate } = require('../middlewares/expressValidator');
-const { splitToken } = require('../utils/main');
-const { registerRules, loginRules } = require('../utils/validationRules');
-const router = express.Router();
-
 
 // add created column/key in table // database .catch err
-router.post('/register', registerRules(), validate, async (req, res) => {
+const register = async (req, res) => {
     try {
         const { username, email, password } = req.body;
         let db = client.db('app').collection("users");
@@ -24,10 +19,10 @@ router.post('/register', registerRules(), validate, async (req, res) => {
     } catch (err) {
         "custom" in err ? res.status(err.status).json(err) : res.status(500).json({ status: 500, message: err.message, error: [...err] });
     }
-});
+};
 
 
-router.post('/login', loginRules(), validate, async (req, res) => {
+const login = async (req, res) => {
     try {
         const { email, password } = req.body;
         let db = client.db('app').collection("users");
@@ -42,10 +37,10 @@ router.post('/login', loginRules(), validate, async (req, res) => {
     } catch (err) {
         "custom" in err ? res.status(err.status).json(err) : res.status(500).json({ status: 500, message: err.message, error: [...err] });
     }
-});
+};
 
 
-router.get('/verify-token', (req, res) => {
+const verifyToken = (req, res) => {
     try {
         const bearerToken = req.headers.authorization;
         let token = splitToken(bearerToken);
@@ -57,12 +52,17 @@ router.get('/verify-token', (req, res) => {
     } catch (err) {
         res.status(500).json({ status: 500, message: err.message, error: [...err] });
     }
-});
+};
 
 
-router.get('/logout', (req, res) => {
+const logout = (req, res) => {
     res.send("logout path");
-});
+};
 
 
-module.exports = router;
+module.exports = {
+    register: register,
+    login: login,
+    verify: verifyToken,
+    logout: logout
+};

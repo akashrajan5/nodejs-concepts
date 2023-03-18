@@ -1,9 +1,11 @@
 const http = require('node:http');
-const app = require('../app');
+const app = require('../../app');
 require('dotenv').config();
 const { client, connectDB } = require('../config/mongodb');
 // const OS = require('node:os');
 
+
+// add clister and child processes in different file
 const cluster = require('node:cluster');
 const { exec } = require('node:child_process');
 
