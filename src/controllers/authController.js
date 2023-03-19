@@ -1,4 +1,4 @@
-const { client } = require('../config/mongodb');
+const client = require('../config/mongodb');
 const { splitToken } = require('../utils/main');
 var jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');

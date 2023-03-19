@@ -13,7 +13,7 @@ app.use(cors);
 
 
 app.use('/auth', auth);
-app.use('/', authVerify, home);
+app.use('/', home);
 app.use('/error', error);
 
 

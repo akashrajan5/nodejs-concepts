@@ -1,59 +1,33 @@
 const http = require('node:http');
 const app = require('../../app');
 require('dotenv').config();
-const { client, connectDB } = require('../config/mongodb');
-// const OS = require('node:os');
-
-
-// add clister and child processes in different file
-const cluster = require('node:cluster');
-const { exec } = require('node:child_process');
-
+// const client = require('../config/mongodb');
+const { runServer } = require('../config/cluster');
 const port = 3000;
 
-
-
-// console.log("Number of cores : ", OS.cpus().length);
-
-// if (cluster.isMaster) {
-//     console.log(`Master process ${process.pid} is running`);
-//     // create forks based on number of cores in the cpu, cores can be found using os.cpus().length, only increase workers on the basis of cpus
-//     let workers = 2;
-//     for (let i = 0; i < workers; i++) cluster.fork();
-
-//     cluster.on('exit', (worker, code, signal) => {
-//         console.log(`worker ${worker.process.pid} died\n\n`);
-//         cluster.fork();
-//     });
-
-// } else {
-//     console.log(`Worker process ${process.pid} started`);
-//     app.set('port', process.env.PORT || port);
-//     http.createServer(app).listen(process.env.PORT || port);
-// }
+// connect to database
 
 app.set('port', process.env.PORT || port);
-http.createServer(app).listen(process.env.PORT || port);
-// database connection
-// connectDB().catch(err => console.log(err));
 
+function startServer() {
+    http.createServer(app).listen(process.env.PORT || port);
+}
+
+// currying function(param1, param2)
+// param1 : default = 'auto' checks no of cpu and creates workers
+//          'disabled' = no workers
+//          number = creates workers based on number
+// param2 : callback function - call http listener as callback
+runServer(2)(startServer);
 
 process.on('uncaughtException', function (err) {
     console.log(err.code, err.port);
     console.error(err.stack);
     console.error((new Date).toUTCString() + ' uncaughtException:', err.message);
-    // exec(`netstat -ano|findstr "PID :3000"`, (err, output) => {
-    //     if (err) {
-    //         console.error("could not execute command: ", err);
-    //         return;
-    //     }
-    //     // log the output received from the command
-    //     console.log("Output: \n", output);
-    // });
     process.exit(1);
 }).on('SIGINT', async function () {
     // close database connection
-    // await client.close();
+    await client.close();
     console.log("DB connection closed");
     console.log("SIGINT");
 }).on('SIGSTOP', () => {
