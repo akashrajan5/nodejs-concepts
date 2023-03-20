@@ -3,21 +3,39 @@ const { splitToken } = require('../utils/main');
 var jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
+const transactionOptions = {
+    readConcern: { level: 'snapshot' },
+    writeConcern: { w: 'majority' },
+    readPreference: 'primary'
+};
+
+// throw inside promise-catch will not trigger outer try catch
+
 // add created column/key in table // database .catch err
 const register = async (req, res) => {
+    var { username, email, password } = req.body;
+    var session = client.startSession();
     try {
-        const { username, email, password } = req.body;
         let db = client.db('app').collection("users");
-        let emailExists = await db.findOne({ email }).catch(err => console.log(err)); // catch not sure
-        if (emailExists != null) throw { custom: true, status: 409, message: "Email already exists" };
-        let hashed = await bcrypt.hash(password, 10).catch(err => { throw err.message; });
-        await db.insertOne({ username, email, password: hashed }).catch(err => { throw err; }); // not sure catch works and revert of jwt fails
-        jwt.sign({ email }, "secretkey", { algorithm: 'HS512', expiresIn: "1hr" }, (err, token) => {
+        session.startTransaction(transactionOptions);
+        let hashedPass = await bcrypt.hash(password, 10);
+        db.findOne({ email }).then(async data => {
+            if (data == null) {
+                await db.insertOne({ username, email, password: hashedPass }, { session });
+                await session.commitTransaction();
+            }
+        });
+        // emailExists.then(data => console.log("then", data)).catch(err => console.log("catch", err));
+        // if (emailExists !== null) throw { custom: true, status: 409, message: "Email already exists" };
+        jwt.sign({ email }, "secret", { algorithm: 'HS512', expiresIn: "1hr" }, async (err, token) => {
             if (err) throw err;
             res.status(200).json({ status: 200, data: { token: token } });
         });
     } catch (err) {
-        "custom" in err ? res.status(err.status).json(err) : res.status(500).json({ status: 500, message: err.message, error: [...err] });
+        await session.abortTransaction();
+        "custom" in err ? res.status(err.status).json(err) : res.status(500).json({ status: 500, message: err.message, error: err });
+    } finally {
+        await session.endSession();
     }
 };
 
@@ -28,7 +46,7 @@ const login = async (req, res) => {
         let db = client.db('app').collection("users");
         let user = await db.findOne({ email }).catch(err => console.log(err));
         if (user == null) throw { isLoggedIn: false, message: "This user is not registered" };
-        let checkPassword = await bcrypt.compare(password, user.password).catch(err => { throw err; });
+        let checkPassword = await bcrypt.compare(password, user.password);
         if (!checkPassword) throw { custom: true, status: 401, message: "Incorrect password" };
         jwt.sign({ email: user.email }, "secretkey", { algorithm: 'HS512', expiresIn: "1hr" }, (err, token) => {
             if (err) throw err;
@@ -64,5 +82,5 @@ module.exports = {
     register: register,
     login: login,
     verify: verifyToken,
-    logout: logout
+    logout: logout,
 };

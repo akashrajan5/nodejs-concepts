@@ -7,42 +7,27 @@ const client = require('./mongodb');
 // const workerProcess = noOfCpus == 1 ? noOfCpus : noOfCpus > 10 ? noOfCpus - 3 : noOfCpus - 1;
 // const testWorkers = 2;
 
-// if (cluster.isPrimary) {
-
-//     console.log(`Master process ${process.pid} is running`);
-//     for (let i = 1; i <= testWorkers; i++) cluster.fork();
-
-//     cluster.on('exit', (worker, code, signal) => {
-//         console.log(`Worker process ${worker.process.pid} died \n\n`);
-//         // signal ? console.log(`Worker was killed by signal`)
-//         cluster.fork(); // starts new worker if process dies
-//     });
-
-// } else {
-//     console.log(`Worker process ${process.pid} started`);
-//     listen http server function here
-// }
-
-
+// params : 'auto' - default, 'disabled' - single node process, type number - creates worker based on number
 function runServer(workers = 'auto') {
     workers !== 'auto' ? workers : OS.cpus().length - 1;
     return function (callBack) {
         if (workers === 'disabled') return callBack();
         if (cluster.isPrimary) {
-            client.connect().then(conn => console.log("Connected to DB")).catch(err => console.log("Failed DB connection", err));
             console.log(`Master process ${process.pid} is running`);
             for (let i = 1; i <= workers; i++) cluster.fork();
 
-            cluster.on('exit', (worker, code, signal) => {
-                console.log(`Worker process ${worker.process.pid} died \n\n`);
+            cluster.on('disconnect', (worker) => { // disconnect runs first
+                console.log(`Worker process ${worker.process.pid} disconnected`);
+                // mongodb active connection length issue, so do i need to close db connection if worker dies?
+                // client.close().then(value => console.log("DB closed", value));
+            }).on('exit', (worker, code, signal) => { // exit runs second
+                console.log(`Worker process ${worker.process.pid} died `, worker.isDead(), "\n\n");
                 cluster.fork();
             });
 
-            // try to clode db here
-            // cluster.on('')
-
         } else {
             console.log(`Worker process ${process.pid} started`);
+            client.connect().then(conn => console.log("DB connected")).catch(err => console.log("DB connection error", err));
             callBack();
         }
     };

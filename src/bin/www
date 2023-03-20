@@ -1,11 +1,9 @@
 const http = require('node:http');
 const app = require('../../app');
 require('dotenv').config();
-// const client = require('../config/mongodb');
 const { runServer } = require('../config/cluster');
+const client = require('../config/mongodb');
 const port = 3000;
-
-// connect to database
 
 app.set('port', process.env.PORT || port);
 
@@ -13,22 +11,16 @@ function startServer() {
     http.createServer(app).listen(process.env.PORT || port);
 }
 
-// currying function(param1, param2)
-// param1 : default = 'auto' checks no of cpu and creates workers
-//          'disabled' = no workers
-//          number = creates workers based on number
-// param2 : callback function - call http listener as callback
-runServer(2)(startServer);
+runServer('disabled')(startServer);
 
+// this portion needs to be handled properly
 process.on('uncaughtException', function (err) {
-    console.log(err.code, err.port);
-    console.error(err.stack);
+    console.log(err.code, err.port, "\n\n", err.stack);
     console.error((new Date).toUTCString() + ' uncaughtException:', err.message);
     process.exit(1);
-}).on('SIGINT', async function () {
+}).on('SIGINT', function () {
     // close database connection
-    await client.close();
-    console.log("DB connection closed");
+    // client.close().then(close => console.log("DB connection closed"));
     console.log("SIGINT");
 }).on('SIGSTOP', () => {
     console.log("SIGSTOP");
